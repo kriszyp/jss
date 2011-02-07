@@ -46,17 +46,17 @@ of semantics directly within our style sheet (no need for a separate file). We c
 HTML directly into JSS. We can also postpend HTML fragments with selector/rules to
 define the styles for that element:
 
-<h1>My App</h1>
-<h2> /title {
-	font-size: 24px;
-}
-
-<ul> /cars {
-	border: 1px;
-	<li> {
-		/make {
-			color: blue;
+	<h1>My App</h1>
+	<h2> /title {
+		font-size: 24px;
+	}
+	
+	<ul> /cars {
+		border: 1px;
+		<li> {
+			/make {
+				color: blue;
+			}
 		}
 	}
-}
 
