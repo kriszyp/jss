@@ -1,3 +1,4 @@
+This project is not complete, this is just a sketch right now
 <h1>JSON Style Sheets</h1>
 JSON Style Sheets (JSS) is a templating tool for rendering JSON/JavaScript data. JSS
 is designed to provide a presentation layer as an extension to CSS, without incurring
@@ -11,6 +12,7 @@ embedded HTML layout information to properly present data, while still using sta
 language syntax and semantics. All valid CSS is valid JSS, and most HTML is valid JSS 
 as well.
 
+data.json:
 	{
 	  "title": "Search for sedans",
 	  "cars": [
@@ -18,6 +20,7 @@ as well.
 	      {"make": "Ford", "model": "Taurus"},
 	    ]
 	}
+template.jss:
 	
 	/title {
 		font-size: 24px;
@@ -29,6 +32,13 @@ as well.
 		color: blue;
 	};
 
+To apply this template to the data:
+
+	var templateString = loadTemplate();
+	var compile = require("jss").compile;
+	var template = compile(templateString);
+	template.apply(targetDom);	
+	
 This would render the JSON with the given styles.
 
 JSS allows for nested definitions as well:
@@ -38,7 +48,17 @@ JSS allows for nested definitions as well:
 			color: blue;
 		};
 	}
- 
+
+Or even mixed with standards CSS selectors:
+	.some-class {
+		/title {
+			font-size: 24px;
+		}
+		/cars {
+			border: 1px;
+		}
+	}
+
 
 However, when rendering JSON in application, we often need much more control over
 the layout, we can utilize HTML directives to add information for layout and interpretation
@@ -51,9 +71,19 @@ define the styles for that element:
 		font-size: 24px;
 	}
 	
-	<ul> /cars {
+	<ul> {
 		border: 1px;
-		<li> {
+		<li> /cars {
+			/make {
+				color: blue;
+			}
+		}
+	}
+
+We can also specify variables within the HTML:
+	<ul> {
+		border: 1px;
+		<li><a href="{/id}"> /cars {
 			/make {
 				color: blue;
 			}
