@@ -17,37 +17,71 @@ define([], function(){
 			});
 		},
 		apply: function(css, domNode, data){
-			var currentFrame = {};
+			var currentFrame = {data: data};
+			function Frame(){
+				
+			}
+			var outputCss = [];
 			var stack = [currentFrame];
 			this.parse(css, function(selector){
-				parentFrame = currentFrame; 
-				var frame = currentFrame = {};
+				Frame.prototype = parentFrame = currentFrame; 
+				var frame = currentFrame = new Frame();
+				var element;
 				stack.push(frame);
-				if(selector.charAt(0) == "/"){
-					frame.data = data[selector.substring(1)];
+				if(selector.charAt(0) == "<"){
+					// its an HTML layout element, separate HTML from selector
+					var html = selector.match(/(.+?)(\s[^\s])?/);
+					selector = html[1].substring(1);
+					html = html[0];
+					// insert HTML, with a marker to find target element
+					parentFrame.element.innerHTML += html + '<span id="__jss_marker__" data-path="' + selector + '"></span>';
+					parentFrame.laidout = true;
+					element = parentFrame.element.getElementById("__jss_marker__");
+					delete element.id;
 				}
-				var tag = selector.match(/<([^>]+)>/);
-				if(tag){
-					var spaceIndex = tag.indexOf(" ");
-					if(spaceIndex > -1){
-						var elementProperties = {};
-						tag.replace(/ ([\w-]+)=(['][^']*[']|["][^"]*["]|[\w-]+)/g, function(name, value){
-							if(value.charAt(0) == '"' || value.charAt(0) == "'"){
-								value = value.substring(1, value.length - 1);
-							}
-							elementProperties[name] = value;
-						});
-						tag = tag.substring(0, spaceIndex);
+				if(selector.indexOf("/") > -1){
+					// a data selector
+					// drill down into the selected path
+					var paths = selector.split("/");
+					var target = parentFrame;
+					for(var i = 0; i < paths.length; i++){
+						target = target && (typeof target.get == "function" ? target.get(paths[i]) : target[paths[i]]);
 					}
-					var element = frame.element.document.createElement(tag);
-					for(var name in elementProperties){
-						element.setAttribute(name, elementProperties[name]);
+					if(!parentFrame.laidout && !parentFrame["child_" + selector]){
+						parentFrame["child_" + selector] = frame;
+						// set the new local variable/path
+						frame[paths[0]] = target;
+						if(!frame.element){
+							element = parentFrame.element.appendChild(document.createElement("div"));
+							element.setAttribute("data-path", selector);
+						}
 					}
-					parentFrame.element.appendChild(element);
+				}else{
+					// a regular CSS selector
+					// TODO: split on commas
+					frame.selector = parentFrame.selector + selector;
 				}
+				if(element){
+					frame.selector = "span[data-path='" + selector + "']";
+				}
+				
 			}, function(properties){
-				frame.element.style = properties;
+				outputCss.push(frame.selector + '{' + properties + ';}');
+				if(!frame.laidout){
+					var data = frame.data;
+					for(var i in data){
+						if(frame["child_" + i]){
+							frame.element.appendChild(document.createElement("div"));
+							
+							
+						}
+						
+					}
+					frame.laidout = true;
+				}
 			});
+			// TODO: create a style tag for the CSS
+			outputCss
 		}
 	}
 });
